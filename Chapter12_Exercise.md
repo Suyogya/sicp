@@ -184,10 +184,10 @@ h(n) = 2^2^2^... (n -1 times)
 ## 1.11
  function f is defined by the rule that f(n) = n if n<3 and f(n) = f(n - 1) + 2f(n - 2) + 3f(n - 3) if n &ge; 3. Write a procedure that computes f by means of a recursive process. Write a procedure that computes f by means of an iterative process.
 
- ### Answer
- Recursive:
+### Answer
+Recursive:
 
- ```lisp
+```lisp
 (define (f11-recur n)
     (if (< n 3)
         n
@@ -199,8 +199,8 @@ h(n) = 2^2^2^... (n -1 times)
 )
  ```
 
- Iterative:
- ```lisp
+Iterative:
+```lisp
 (define (f11-iter n)
     (define (iter a b c count)
         (if (> count n)
@@ -212,40 +212,38 @@ h(n) = 2^2^2^... (n -1 times)
 )
  ```
 
- ## 1.12
+## 1.12
 
- The following pattern of numbers is called Pascal's triangle.
+The following pattern of numbers is called Pascal's triangle.
 
- ```
+```
              1
             1 1
            1 2 1
           1 3 3 1
          1 4 6 4 1
             ...
- ```
+```
 
- The numbers at the edge of the triangle are all 1, and each number inside the triangle is the sum of the two numbers above it. Write a procedure that computes elements of Pascal's triangle by means of a recursive process.
+The numbers at the edge of the triangle are all 1, and each number inside the triangle is the sum of the two numbers above it. Write a procedure that computes elements of Pascal's triangle by means of a recursive process.
 
- ### Answer
- ```lisp
- (define (pascal r c)
-    (cond ((or (= c 0) (= r c)) 1)
-          ((or (< c 0) (< r c)) 0)
+### Answer
+```lisp
+(define (pascal r c)
+   (cond ((or (= c 0) (= r c)) 1)
+         ((or (< c 0) (< r c)) 0)
           (else (+ (pascal (- r 1) (- c 1))
                    (pascal (- r 1) c)
                 )
           )
     )
 )
- ```
-
- ### 1.13
- Prove that Fib(n) is the closest integer to &#x3a6;<sup>n</sup>/5<sup>&#xbd;</sup>, where &#x3a6; = (1 + 5<sup>&#xbd;</sup>)/2. Hint: Let &#x3a8; = (1 - 5<sup>&#xbd;</sup>)/2. Use induction and the definition of the Fibonacci numbers to prove that Fib(n) = (&#x3a6;<sup>n</sup> - &#x3a8;<sup>n</sup>)/5<sup>&#xbd;</sup>.
-
- For the first part, define:
- ```lisp
- (define phi (/ (+ 1 (sqrt 5)) 2))
+```
+### 1.13
+Prove that Fib(n) is the closest integer to &#x3a6;<sup>n</sup>/5<sup>&#xbd;</sup>, where &#x3a6; = (1 + 5<sup>&#xbd;</sup>)/2. Hint: Let &#x3a8; = (1 - 5<sup>&#xbd;</sup>)/2. Use induction and the definition of the Fibonacci numbers to prove that Fib(n) = (&#x3a6;<sup>n</sup> - &#x3a8;<sup>n</sup>)/5<sup>&#xbd;</sup>.
+For the first part, define:
+```lisp
+(define phi (/ (+ 1 (sqrt 5)) 2))
 
 (define (phi-fib n)
     (/ (^ phi n) (sqrt 5))

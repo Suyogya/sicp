@@ -51,8 +51,26 @@
 (define (sqrt-iter guess x)
     (let ((improved-guess (improve guess x)))
         (if (good-enough? guess improved-guess)
-            guess
+            improved-guess
             (sqrt-iter improved-guess x) 
         )
     )
+)
+
+;Ex1.8 Implement cube root procedure based on Newton's method
+(define (cube-root x)
+    (cube-iter 1.0 x)
+)
+
+(define (cube-iter guess x)
+    (let ((improved-guess (improve-cube-root guess x)))
+        (if (good-enough? guess improved-guess)
+            improved-guess
+            (cube-iter improved-guess x)
+        )
+    )
+)
+
+(define (improve-cube-root guess x)
+    (/ (+ (/ x (square guess)) (* 2 guess)) 3)
 )

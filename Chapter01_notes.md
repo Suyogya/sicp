@@ -143,7 +143,7 @@ For e.g. `(f 5)` would proceed as,
     - Lazy evaluation - Delay evaluation of procedure arguments until the last possible moment
 * *applicative-order evaluation* 
     - evaluate the arguments and then apply
-    
+
 
 Lisp uses applicative-order evaluation because of
 - added efficiency
@@ -246,6 +246,72 @@ In terms of procedure,
 )
 
 (define (sqrt x)
+    (sqrt-iter 1.0 x)
+)
+```
+
+## 1.1.8 Procedures as Black-Box abstraction
+Not concerned with how the procedure computes its result, only with what it does, *procedural abstraction*.
+
+For e.g. as far as good-enough? procedure is concerned square is not quite a procedure but abstraction of a procedure
+
+Procedure definition should be able to suprress detail.
+
+### Local names
+Implementer's choice of names for procedure's formal parameters should not matter.
+
+Parameters are local to the bodies of their respective procedures.
+
+Name of the formal parameter does not matter. Such name is called *bound variable* and procedure definition is said to *bind* its formal parameter. If variable is not bound, its *free*.
+
+Set of expressions for which a binding defines a name is called the *scope* of that name.
+
+Formal parameters of the procedure have the body of the procedure as their scope.
+
+### Internal definitions and block structure
+We can rewrite square root so the procedures like `sqrt-iter, good-enough? and improve` are not separate procedures
+
+```lisp
+(define (sqrt x)
+    (define (good-enough? guess x)
+        (< (abs (- (square guess) x)) 0.0001)
+    )
+    (define (improve guess x)
+        (average guess (/ x guess))
+    )
+    (define (sqrt-iter guess x)
+        (if (good-enough? guess x)
+            guess
+            (sqrt-iter (mprove guess x) x)
+        )
+    )
+    (sqrt-iter 1.0 x)
+)
+```
+
+Such nesting of definition is called *block structure*
+- simplest solution to name packaging problem.
+
+We can simplify such internalized procedure by using the bound variables. For e.g. `x` is bound in the definition of sqrt, all internalized procedures (`good-enough?, improve, and sqrt-iter`) are in the scope of `x`.
+- We do not need to pass `x` explicitly to each procedure.
+- We allow `x` to be free variable in the internal definitions
+
+This is called *lexical scoping*
+
+```lisp
+(define (sqrt x)
+    (define (good-enough? guess)
+        (< (abs (- (square guess) x)) 0.0001)
+    )
+    (define (improve guess)
+        (average guess (/ x guess))
+    )
+    (define (sqrt-iter guess x)
+        (if (good-enough? guess x)
+            guess
+            (sqrt-iter (improve guess x) x)
+        )
+    )
     (sqrt-iter 1.0 x)
 )
 ```

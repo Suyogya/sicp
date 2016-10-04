@@ -140,3 +140,44 @@ Although, iterative process of fibonacci is better than the recursive process, t
  - If a is 0, we should count that as 1 way to make change
  - If a is less than 0, we should count that as 0 ways to make change
  - If n is 0, we should count that as 0 ways to make change
+
+The definition of the procedure is,
+```lisp
+(define (count-change amount)
+    (define (cc amount kind-of-coin)
+        (cond ((= amount 0) 1)
+              ((or (< amount 0) (= kind-of-coin 0)) 0)
+              (else
+                (+ (cc (- amount (denomination kind-of-coin)) kind-of-coin)
+                   (cc amount (- kind-of-coin 1))
+                )
+              )
+        )
+    )
+    (define (denomination kind-of-coin)
+        (cond ((= kind-of-coin 1) 1)
+              ((= kind-of-coin 2) 5)
+              ((= kind-of-coin 3) 10)
+              ((= kind-of-coin 4) 25)
+              ((= kind-of-coin 5) 50)
+        )
+    )
+    (cc amount 5)
+)
+```
+
+## 1.2.3 Orders of Growth
+*order of growth* is used to measure the resources required by a process as input becomes larger.
+
+Let `n` be the size of problem, `R(n)` be the amount of resources the process requires for problem of size `n`.
+
+We say `R(n)` has order of growth &Theta;(f(n)), written R(n) = &Theta;(f(n)) if there are positive constant k<sub>1</sub> and k<sub>2</sub> independent of n such that
+
+k<sub>1</sub>f(n) &le; R(n) &le; k<sub>2</sub>f(n)
+
+for any sufficiently large value of n.
+
+For the recursive process of computing factorial, the number of steps grows proportionally to the input n. Thus, the steps required for this process grows as &Theta;(n).
+
+Also the space required grows as &Theta;(n)
+

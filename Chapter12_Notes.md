@@ -181,3 +181,43 @@ For the recursive process of computing factorial, the number of steps grows prop
 
 Also the space required grows as &Theta;(n)
 
+## 1.2.4 Exponentiation
+Recursive definition of exponent,<br>
+b<sup>n</sup> = b.b<sup>n-1</sup><br>
+b<sup>0</sup> = 1
+
+```lisp
+(define (expt b n)
+    (if (= n 0) 1
+        (* b (expt b (- n 1)))
+    )
+)
+```
+Order of Growth &Theta;(n) both time and space.
+
+In Linear Iteration
+```lisp
+(define (expt-iter b n)
+    (define (iter result count)
+        (if (> count n) result
+            (iter (* b result) (1+ count))
+        )
+    )
+    (iter 1 1)
+)
+```
+Order of Growth &Theta;(n) time and &Theta;(1) space
+
+We can interprete exponent as successive squares,<br>
+b<sup>n</sup> = (b<sup>2</sup>)<sup>n/2</sup> for even n<br>
+b<sup>n</sup> = b.(b<sup>2</sup>)<sup>(n-1)/2</sup> for odd n<br>
+
+```lisp
+(define (fast-expt b n)
+    (cond ((= n 0) 1)
+          ((even? n) (square (expt b (/ n 2))))
+          (else (* b (expt b (- n 1))))
+    )
+)
+```
+Order of growth &Theta;(log n)

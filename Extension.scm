@@ -11,8 +11,12 @@
     (= (remainder x 2) 0)
 )
 
-(define (square? x)
+(define (square x)
     (* x x)
+)
+
+(define (sum-of-square a b)
+    (+ (square a) (square b))
 )
 
 (define (sqrt x)
@@ -35,4 +39,8 @@
 
 (define (average x y)
     (/ (+ x y) 2)
+)
+
+(define (double x)
+    (* x 2)
 )

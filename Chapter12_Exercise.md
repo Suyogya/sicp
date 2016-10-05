@@ -412,3 +412,148 @@ So we can say, the order of growth is,<br>
 &theta;(log(a))
 
 The order of growth is same for both time and space since they're both determined by number of times we need to apply `p`.
+
+
+## 1.16
+Design a procedure that evolves an iterative exponentiation process that uses successive squaring and uses a logarithmic number of steps, as does fast-expt. (Hint: Using the observation that (bn/2)2 = (b2)n/2, keep, along with the exponent n and the base b, an additional state variable a, and define the state transformation in such a way that the product a bn is unchanged from state to state. At the beginning of the process a is taken to be 1, and the answer is given by the value of a at the end of the process. In general, the technique of defining an invariant quantity that remains unchanged from state to state is a powerful way to think about the design of iterative algorithms.)
+
+### Answer
+```lisp
+(define (fast-expt-iter b n)
+    (define (iter a num p)
+        (cond ((= p 0) a)
+              ((even? p) (iter a (square num) (/ p 2)))
+              (else  (iter (* num a) num (- p 1)))
+        )
+    )
+    (iter 1 b n)
+)
+```
+
+## 1.17
+The exponentiation algorithms in this section are based on performing exponentiation by means of repeated multiplication. In a similar way, one can perform integer multiplication by means of repeated addition. The following multiplication procedure (in which it is assumed that our language can only add, not multiply) is analogous to the expt procedure:
+```lisp
+(define (* a b)
+  (if (= b 0)
+      0
+      (+ a (* a (- b 1)))))
+```
+This algorithm takes a number of steps that is linear in b. Now suppose we include, together with addition, operations double, which doubles an integer, and halve, which divides an (even) integer by 2. Using these, design a multiplication procedure analogous to fast-expt that uses a logarithmic number of steps.
+
+### Answer
+b * a = (2 * b) * (a / 2) (when a is even)<br>
+b * a = b + (2 *b) * ((a - 1)/2) (when a is odd)<br>
+
+```lisp
+(define (fast-expt b n)
+    (cond ((= n 0) 1)
+          ((even? n) (square (expt b (/ n 2))))
+          (else (* b (expt b (- n 1))))
+    )
+)
+```
+
+## 1.18
+Using the results of exercises 1.16 and 1.17, devise a procedure that generates an iterative process for multiplying two integers in terms of adding, doubling, and halving and uses a logarithmic number of steps.40
+
+### Answer
+```lisp
+
+(define (fast-mult-iter a b)
+    (define (iter result y z)
+        (cond ((= z 0) result)
+              ((even? z) (iter result (double y) (/ z 2)))
+              (else (iter (+ result y) y (- z 1)))
+        )
+    )
+    (iter 0 a b)
+)
+```
+
+## 1.19
+There is a clever algorithm for computing the Fibonacci numbers in a logarithmic number of steps. Recall the transformation of the state variables a and b in the fib-iter process of section 1.2.2: a  a + b and b  a. Call this transformation T, and observe that applying T over and over again n times, starting with 1 and 0, produces the pair Fib(n + 1) and Fib(n). In other words, the Fibonacci numbers are produced by applying Tn, the nth power of the transformation T, starting with the pair (1,0). Now consider T to be the special case of p = 0 and q = 1 in a family of transformations Tpq, where Tpq transforms the pair (a,b) according to a bq + aq + ap and b  bp + aq. Show that if we apply such a transformation Tpq twice, the effect is the same as using a single transformation Tp'q' of the same form, and compute p' and q' in terms of p and q. This gives us an explicit way to square these transformations, and thus we can compute Tn using successive squaring, as in the fast-expt procedure. Put this all together to complete the following procedure, which runs in a logarithmic number of steps:
+
+```lisp
+(define (fib n)
+  (fib-iter 1 0 0 1 n))
+(define (fib-iter a b p q count)
+  (cond ((= count 0) b)
+        ((even? count)
+         (fib-iter a
+                   b
+                   <??>      ; compute p'
+                   <??>      ; compute q'
+                   (/ count 2)))
+        (else (fib-iter (+ (* b q) (* a q) (* a p))
+                        (+ (* b p) (* a q))
+                        p
+                        q
+                        (- count 1)))))
+```
+
+Applying transformation T<sub>pq</sub> on a b<br>
+a <- bq + ap + aq<br>
+b <- bp + aq
+
+Applying transformation T<sub>pq</sub> again on a,<br>
+a <- (bp + aq)q + (bq + ap + aq)p + (bq + ap + aq)q<br>
+&nbsp;&nbsp; <- bpq + aq&sup2; + bpq + ap&sup2; + apq + bq&sup2; + apq + aq&sup2;<br>
+&nbsp;&nbsp; <- b(q&sup2; + 2pq) + a(p&sup2; + q&sup2;) + a(q&sup2; + 2pq)<br>
+&nbsp;&nbsp; <- bq' + ap' + aq'
+
+This gives us,
+p' = (p&sup2; + q&sup2;)
+q' = (q&sup2; + 2pq)
+
+In addition, applying transform T<sub>pq</sub> again on b,<br>
+b <- (bp + aq)p + (bq + ap + aq)q<br>
+&nbsp;&nbsp; <- bp&bup2; + apq + bq&sup2; + apq + aq&sup2;<br>
+&nbsp;&nbsp; <- b(p&sup2; + q&sup2;) + a(q&sup2; + 2pq)<br>
+
+```lisp
+(define (fib n)
+    (define (fib-iter a b p q count)
+        (cond ((= count 0) b)
+            ((even? count)
+                (fib-iter a
+                          b
+                          (sum-of-square p q)
+                          (+ (square q) (* 2 p q))
+                          (/ count 2)
+                )
+            )
+            (else 
+                (fib-iter (+ (* b q) (* a q) (* a p))
+                            (+ (* b p) (* a q))
+                            p
+                            q
+                            (- count 1)
+                )
+            )
+        )
+    )
+    (fib-iter 1 0 0 1 n)
+)
+```
+
+#### Explanation
+
+Fibonacci is a Transformation T such that,<br>
+a <- a + b<br>
+b <- a<br>
+
+After applying T n times T<sup>n</sup> we get,<br>
+a = Fib(n+1)<br>
+b = Fib (n)<br>
+
+Considering T as a special case of T<sub>pq</sub> such that,<br>
+a <- bq + ap + aq<br>
+b <- bp + aq<br>
+Where, p = 0 and q = 1 (which when substituted results in Transformation T,  a <- a + b and b <- a)<br>
+
+We can say that Fib (n+1) and Fib(n) is applying (T<sub>pq</sub>)<sup>n</sup> transformation.<br>
+(T<sub>pq</sub>)<sup>n</sup> = ((T<sub>pq</sub>)<sup>2</sup>)<sup>n/2</sup> (when n is even)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= (T<sub>p'q'</sub>)<sup>n/2</sup><br>
+(T<sub>pq</sub>)<sup>n</sup> = T<sub>pq</sub>(T<sub>pq</sub>)<sup>n - 1</sup> (when n is odd)
+
+

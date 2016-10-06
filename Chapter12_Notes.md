@@ -221,3 +221,28 @@ b<sup>n</sup> = b.(b<sup>2</sup>)<sup>(n-1)/2</sup> for odd n<br>
 )
 ```
 Order of growth &Theta;(log n)
+
+## 1.2.5 Greatest Common Divisor
+GCD of two integers a and b is defined as the largest integer that divides both a and b with no remainder.
+
+if r is the remainder when a is divided by b, then the common divisors of a and b are precisely the same as common divisors of b and r.
+
+Thus,<br>
+GCD(a, b) = GCD (b, r)
+
+```lisp
+(define (GCD a b)
+    (if (= b 0) a
+        (GCD b (Remainder a b))
+    )
+)
+```
+
+The order of growth is &Theta;(log n)
+
+**Lam&eacute;'s Theorem**: If Euclid's Algorithm requires k steps to compute GCD of some pair, then the smaller number in the pair must be greater than or equal to the kth Fibonacci number.
+
+If the process takes k steps,<br>
+n &ge; Fib(k) &#x2248; &phi;<sup>k</sup>/5<sup>1/2</sup>
+
+Therefore the number of steps k grows as logarithm (to the base &phi;) of n. Hence, the order of growth is &Theta;(log n)

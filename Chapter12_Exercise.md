@@ -618,3 +618,600 @@ Using applicative-order evaluation
 2
 
  ```
+
+ ## 1.21
+Use the smallest-divisor procedure to find the smallest divisor of each of the following numbers: 199, 1999, 19999
+
+### Answer
+```lisp
+1 ]=> (smallest-divisor 199)
+
+;Value: 199
+
+1 ]=> (smallest-divisor 1999)
+
+;Value: 1999
+
+1 ]=> (smallest-divisor 19999)
+
+;Value: 7
+
+```
+
+
+## 1.22
+Most Lisp implementations include a primitive called runtime that returns an integer that specifies the amount of time the system has been running (measured, for example, in microseconds). The following timed-prime-test procedure, when called with an integer n, prints n and checks to see if n is prime. If n is prime, the procedure prints three asterisks followed by the amount of time used in performing the test.
+
+```lisp
+(define (timed-prime-test n)
+  (newline)
+  (display n)
+  (start-prime-test n (runtime)))
+(define (start-prime-test n start-time)
+  (if (prime? n)
+      (report-prime (- (runtime) start-time))))
+(define (report-prime elapsed-time)
+  (display " *** ")
+  (display elapsed-time))
+```
+
+Using this procedure, write a procedure search-for-primes that checks the primality of consecutive odd integers in a specified range. Use your procedure to find the three smallest primes larger than 1000; larger than 10,000; larger than 100,000; larger than 1,000,000. Note the time needed to test each prime. Since the testing algorithm has order of growth of (n), you should expect that testing for primes around 10,000 should take about 10 times as long as testing for primes around 1000. Do your timing data bear this out? How well do the data for 100,000 and 1,000,000 support the n prediction? Is your result compatible with the notion that programs on your machine run in time proportional to the number of steps required for the computation?
+
+### Answer
+Modified the program as follows
+```lisp
+
+(define (timed-prime-test n)
+  (newline)
+  (display n)
+  (start-prime-test n (runtime))
+)
+
+(define (start-prime-test n start-time)
+  (if (is-prime? n)
+      (begin
+          (report-prime (- (runtime) start-time))
+          true
+      )
+      false
+  )
+)
+
+(define (report-prime elapsed-time)
+  (display " *** ")
+  (display elapsed-time)
+)
+
+(define (search-for-prime a n)
+    (define (iter number count)
+        (if (< count n)
+            (begin
+                (if (timed-prime-test number)
+                    (iter (+ number 2) (1+ count))
+                    (iter (+ number 2) count) 
+                )
+            )
+        )
+    )
+    (if (even? a)
+        (iter (+ a 1) 0)
+        (iter (+ a 2) 0)
+    )
+)
+```
+
+Results for 10^10, 10^11, 10^12 are as follows
+```lisp
+
+1 ]=> (search-for-prime 10000000000 3)
+
+10000000001
+10000000003
+10000000005
+10000000007
+10000000009
+10000000011
+10000000013
+10000000015
+10000000017
+10000000019 *** .12000000000000005
+10000000021
+10000000023
+10000000025
+10000000027
+10000000029
+10000000031
+10000000033 *** .08999999999999997
+10000000035
+10000000037
+10000000039
+10000000041
+10000000043
+10000000045
+10000000047
+10000000049
+10000000051
+10000000053
+10000000055
+10000000057
+10000000059
+10000000061 *** .08999999999999997
+;Unspecified return value
+
+1 ]=> (search-for-prime 100000000000 3)
+
+100000000001
+100000000003 *** .3700000000000001
+100000000005
+100000000007
+100000000009
+100000000011
+100000000013
+100000000015
+100000000017
+100000000019 *** .2799999999999998
+100000000021
+100000000023
+100000000025
+100000000027
+100000000029
+100000000031
+100000000033
+100000000035
+100000000037
+100000000039
+100000000041
+100000000043
+100000000045
+100000000047
+100000000049
+100000000051
+100000000053
+100000000055
+100000000057 *** .28
+;Unspecified return value
+
+1 ]=> (search-for-prime 1000000000000 3)
+
+1000000000001
+1000000000003
+1000000000005
+1000000000007
+1000000000009
+1000000000011
+1000000000013
+1000000000015
+1000000000017
+1000000000019
+1000000000021
+1000000000023
+1000000000025
+1000000000027
+1000000000029
+1000000000031
+1000000000033
+1000000000035
+1000000000037
+1000000000039 *** .9300000000000002
+1000000000041
+1000000000043
+1000000000045
+1000000000047
+1000000000049
+1000000000051
+1000000000053
+1000000000055
+1000000000057
+1000000000059
+1000000000061 *** .73
+1000000000063 *** .7400000000000002
+;Unspecified return value
+
+```
+The time required to calculate the result did grow at the order of &Theta;(n<sup>1/2</sup>).
+
+## Ex 1.23
+The smallest-divisor procedure shown at the start of this section does lots of needless testing: After it checks to see if the number is divisible by 2 there is no point in checking to see if it is divisible by any larger even numbers. This suggests that the values used for test-divisor should not be 2, 3, 4, 5, 6, ..., but rather 2, 3, 5, 7, 9, .... To implement this change, define a procedure next that returns 3 if its input is equal to 2 and otherwise returns its input plus 2. Modify the smallest-divisor procedure to use (next test-divisor) instead of (+ test-divisor 1). With timed-prime-test incorporating this modified version of smallest-divisor, run the test for each of the 12 primes found in exercise 1.22. Since this modification halves the number of test steps, you should expect it to run about twice as fast. Is this expectation confirmed? If not, what is the observed ratio of the speeds of the two algorithms, and how do you explain the fact that it is different from 2?
+
+### Answer
+
+The new implementation of Smallest-divisor
+```lisp
+(define (smallest-divisor n)
+    (define (find-divisor n test-divisor)
+        (cond ((> (square test-divisor) n) n)
+              ((divides? test-divisor n) test-divisor)
+              (else (find-divisor n (next test-divisor)))
+        )
+    )
+    (define (divides? a b)
+        (= (remainder b a) 0)
+    )
+    (define (next divisor)
+        (if (even? divisor)
+            (1+ divisor)
+            (+ divisor 2)
+        )
+    )
+    (find-divisor n 2)
+)
+```
+
+Timing for search-for-prime after the change
+```lisp
+1 ]=> (search-for-prime 1000000000000 3)
+
+1000000000001
+1000000000003
+1000000000005
+1000000000007
+1000000000009
+1000000000011
+1000000000013
+1000000000015
+1000000000017
+1000000000019
+1000000000021
+1000000000023
+1000000000025
+1000000000027
+1000000000029
+1000000000031
+1000000000033
+1000000000035
+1000000000037
+1000000000039 *** .7199999999999998
+1000000000041
+1000000000043
+1000000000045
+1000000000047
+1000000000049
+1000000000051
+1000000000053
+1000000000055
+1000000000057
+1000000000059
+1000000000061 *** .6000000000000005
+1000000000063 *** .5599999999999996
+```
+
+It looks like we did gain some time but the ratio is around 1.5.
+
+This is because of of the `next` procedure's `if` test
+
+## 1.24
+Modify the timed-prime-test procedure of exercise 1.22 to use fast-prime? (the Fermat method), and test each of the 12 primes you found in that exercise. Since the Fermat test has (log n) growth, how would you expect the time to test primes near 1,000,000 to compare with the time needed to test primes near 1000? Do your data bear this out? Can you explain any discrepancy you find?
+
+### Answer
+
+```lisp
+
+(define (timed-prime-test n)
+  (newline)
+  (display n)
+  (start-prime-test n (runtime))
+)
+
+(define (start-prime-test n start-time)
+  (if (fast-prime? n 100)
+      (begin
+          (report-prime (- (runtime) start-time))
+          true
+      )
+      false
+  )
+)
+
+(define (report-prime elapsed-time)
+  (display " *** ")
+  (display elapsed-time)
+)
+
+(define (search-for-prime a n)
+    (define (iter number count)
+        (if (< count n)
+            (begin
+                (if (timed-prime-test number)
+                    (iter (+ number 2) (1+ count))
+                    (iter (+ number 2) count) 
+                )
+            )
+        )
+    )
+    (if (even? a)
+        (iter (+ a 1) 0)
+        (iter (+ a 2) 0)
+    )
+)
+```
+
+For small data, the growth is logarithmic. For huge numbers it grows faster because primitive arithmetic operations are more costly with huge numbers.
+
+## 1.25
+
+Alyssa P. Hacker complains that we went to a lot of extra work in writing expmod. After all, she says, since we already know how to compute exponentials, we could have simply written
+```lisp
+(define (expmod base exp m)
+  (remainder (fast-expt base exp) m))
+```
+Is she correct? Would this procedure serve as well for our fast prime tester? Explain.
+
+### Answer
+When using this method, which is very straight forward, we are calculating number that are exponentially larger than m. The arithmetic operation on these huge numbers are costly.
+
+Whereas, as explained in the expmod, the expmod procedure keeps the number we are operating on, smaller than m. Hence they are much faster.
+
+## 1.26
+Louis Reasoner is having great difficulty doing exercise 1.24. His fast-prime? test seems to run more slowly than his prime? test. Louis calls his friend Eva Lu Ator over to help. When they examine Louis's code, they find that he has rewritten the expmod procedure to use an explicit multiplication, rather than calling square:
+
+```lisp
+(define (expmod base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (remainder (* (expmod base (/ exp 2) m)
+                       (expmod base (/ exp 2) m))
+                    m))
+        (else
+         (remainder (* base (expmod base (- exp 1) m))
+                    m))))
+```
+
+`I don't see what difference that could make,` says Louis. `I do.` says Eva. `By writing the procedure like that, you have transformed the (log n) process into a (n) process.` Explain.
+
+### Answer
+
+This method procedure a tree recursion. Each argument of the multiplication have their own recursion tree and hence the execution time grows exponentially with the depth of the tree.
+
+Hence, the order of growth is &Theta;(n) instead of &Theta; (log n) 
+
+
+##  1.27
+Demonstrate that the Carmichael numbers listed in footnote 47 really do fool the Fermat test. That is, write a procedure that takes an integer n and tests whether an is congruent to a modulo n for every a < n, and try your procedure on the given Carmichael numbers.
+
+### Answer
+
+```lisp
+
+(define (carmichael n)
+    (define (fermat-test a n)
+        (= (expmod a n n) a)
+    )
+    (define (iter count)
+        (cond ((= count n) true)
+              ((fermat-test count n) (iter (1+ count)))
+              (else false)
+        )
+    )
+    (iter 1)
+)
+```
+
+All of the Carmichael number fools Fermat's test
+
+```lisp
+1 ]=> (carmichael 561)
+
+;Value: #t
+
+1 ]=> (carmichael 1105)
+
+;Value: #t
+
+1 ]=> (carmichael 1729)
+
+;Value: #t
+
+1 ]=> (carmichael 2465)
+
+;Value: #t
+
+1 ]=> (carmichael 2821)
+
+;Value: #t
+
+1 ]=> (carmichael 6601)
+
+;Value: #t
+
+```
+
+## 1.28
+One variant of the Fermat test that cannot be fooled is called the Miller-Rabin test (Miller 1976; Rabin 1980). This starts from an alternate form of Fermat's Little Theorem, which states that if n is a prime number and a is any positive integer less than n, then a raised to the (n - 1)st power is congruent to 1 modulo n. To test the primality of a number n by the Miller-Rabin test, we pick a random number a < n and raise a to the (n - 1)st power modulo n using the expmod procedure. However, whenever we perform the squaring step in expmod, we check to see if we have discovered a ``nontrivial square root of 1 modulo n,'' that is, a number not equal to 1 or n - 1 whose square is equal to 1 modulo n. It is possible to prove that if such a nontrivial square root of 1 exists, then n is not prime. It is also possible to prove that if n is an odd number that is not prime, then, for at least half the numbers a < n, computing an-1 in this way will reveal a nontrivial square root of 1 modulo n. (This is why the Miller-Rabin test cannot be fooled.) Modify the expmod procedure to signal if it discovers a nontrivial square root of 1, and use this to implement the Miller-Rabin test with a procedure analogous to fermat-test. Check your procedure by testing various known primes and non-primes. Hint: One convenient way to make expmod signal is to have it return 0.
+
+### Answer
+
+Miller-Rabin test<br>
+If n is a prime number<br>
+for positive integer a < n, a<sup>n - 1</sup> modulo n = 1 modulo n = 1
+
+steps:
+1. Pick a < n
+2. a<sup>n - 1</sup> modulo n
+3. when squaring if we find "nontrivieal square root of 1 modulo n", then it is not prime
+
+Non Trivial square root a is:
+- not equal to 1
+- not equal to n - 1
+- congruent to 1 modulo a
+
+
+Also, for odd number, n, that is not prime, at least half the number a < n, computing a<sup> n -1</sup> will reveal nontrivial square root of 1 modulo n.
+
+*Note - book reads: whose square is equal to 1 modulo n. However, it meant square is congruent 1 modulo n*
+
+##Answer
+```lisp
+(define (miller-rabin-expmod base exp m)
+    (define (squaremod-with-check x)
+        (define (non-trivial-sqrt? x square)
+            (if (and (= square 1)
+                     (not (= x 1))
+                     (not (= x (- m 1)))
+                )
+                0
+                square
+            )
+        )
+        (non-trivial-sqrt? x (remainder (square x) m))
+    )
+    (cond ((= exp 0) 1)
+          ((even? exp) (squaremod-with-check
+                            (miller-rabin-expmod base (/ exp 2) m)
+                       )
+          )
+          (else
+            (remainder (* base (miller-rabin-expmod base (-exp 1) m)) m)
+          )
+    )
+)
+
+(define (miller-rabin-test n)
+    (define (try-it a)
+        (define (check-it x)
+            (and (not (= x 0)) (= x 1))
+        )
+        (check-it (miller-rabin-expmod a (- n 1) n))
+    )
+    (try-it (+ 1 (random (- n 1))))
+)
+
+
+(define (fast-prime? n times)
+    (cond ((= time 0) true)
+          ((miller-rabin-test n) (fast-prime? n (- times 1)))
+          (else false)
+    )
+)
+
+(define (prime? n)
+    (fast-prime? n 100)
+)
+```
+
+#### For prime
+```lisp
+(prime? 7)
+(fast-prime? 7 100)
+(miller-rabin-test 7)
+(try-it 3)
+(check-it (miller-rabin-expmod 3 6 7))
+(check-it 2) ;See (miller-rabin-expmod 3 6 7) expansion below
+(and (not (= 1 0)) (= 1 1))
+true
+```
+
+```lisp
+;expanding (miller-rabin-expmod 3 6 7)
+(squaremod-with-check (miller-rabin-expmod 3 3 7))
+(squaremod-with-check
+    (remainder (* 3 (miller-rabin-expmod 3 2 7) 7))
+)
+(squaremod-with-check
+    (remainder (* 3 (squaremod-with-check 
+                        (miller-rabin-expmod 3 1 7)    
+                    )) 7)
+)
+(squaremod-with-check
+    (remainder (* 3 (squaremod-with-check 
+                        (remainder (* 3 (miller-rabin-expmod 3 0 7)) 7)    
+                    )) 7)
+)
+(squaremod-with-check
+    (remainder (* 3 (squaremod-with-check 
+                        (remainder (* 3 1) 7)    
+                    )) 7)
+)
+(squaremod-with-check
+    (remainder (* 3 (squaremod-with-check 
+                        (remainder 3 7)    
+                    )) 7)
+)
+(squaremod-with-check
+    (remainder (* 3 (squaremod-with-check 3)) 7)
+)
+(squaremod-with-check
+    (remainder (* 3 (non-trivial-sqrt? 3 (remainder 9 7))) 7)
+)
+(squaremod-with-check
+    (remainder (* 3 (non-trivial-sqrt? 3 2)) 7)
+)
+(squaremod-with-check
+    (remainder (* 3 2) 7)
+)
+(squaremod-with-check 6)
+(non-trivial-sqrt? 6 (remainder (square 6) 7))
+(non-trivial-sqrt? 6 1)
+1
+```
+
+#### For non prime
+```lisp
+
+(prime? 6)
+(fast-prime? 6 100)
+(miller-rabin-test 6)
+(try-it 3)
+(check-it (miller-rabin-expmod 3 5 6))
+(check-it 2) ;See (miller-rabin-expmod 3 5 6) expansion below
+```
+
+```lisp
+(miller-rabin-expmod 3 5 6)
+(remainder (* 3 (miller-rabin-expmod 3 4 6)) 6)
+(remainder (* 3 (squaremod-with-check (miller-rabin-expmode 3 2 6))) 6)
+(remainder (* 3 (squaremod-with-check (squaremod-with-check (miller-rabin-expmode 3 1 6)))) 6)
+(remainder (* 3 (squaremod-with-check (squaremod-with-check (remainder (* 3 (miller-rabin-expmode 3 0 6)) 6)))) 6)
+(remainder (* 3 (squaremod-with-check (squaremod-with-check (remainder (* 3 1) 6)))) 6)
+(remainder (* 3 (squaremod-with-check (squaremod-with-check (remainder 3 6)))) 6)
+(remainder (* 3 (squaremod-with-check (squaremod-with-check 3))) 6)
+(remainder (* 3 (squaremod-with-check (non-trivial-sqrt? 3 (remainder (square 3) 6)))) 6)
+(remainder (* 3 (squaremod-with-check (non-trivial-sqrt? 3 3))) 6)
+(remainder (* 3 (squaremod-with-check 3)) 6)
+(remainder (* 3 3) 6)
+3
+```
+
+Another implementation,
+```lisp
+(define (expmod-mr base exp n)
+    (define (square-non-trivial-check x)
+        (let ((y (remainder (square x) n)))
+            (if (and (not (= x 1)) (not (= x (- n 1))) (= y 1))
+                0
+                y
+            )
+        )
+    )
+    (cond ((= exp 0) 1)
+          ((even? exp) (square-nontrivial-check (expmod-mr base (/ exp 2) n)))
+          (else (remainder (* base (expmod-mr base (- exp 1) n)) n))
+    )
+)
+
+(define (mr-test n)
+    (define (check a)
+        (= (expmod a (- n 1) n) 1)
+    )
+    (check (+ 1 (random-integer (- n 1))))
+)
+
+(define (mr-prime? n)
+    (define (test a)
+        (cond ((= a 0) true)
+              ((mr-test n) (test (- a 1)))
+              (else false)
+        )
+    )
+    (if (= n 1) #f (test 100))
+)
+```
+
+#### Explanation
+From Fermat's little theorem we have, for a < n,<br>
+a<sup>n</sup> &cong; a (mod n)<br>
+Dividing both sides by a
+a<sup>n - 1</sup> &cong; 1 (mod n)
+
+Refer:
+- [Solution 1](http://community.schemewiki.org/?sicp-ex-1.28)
+- [Solution 2](http://www.billthelizard.com/2010/03/sicp-exercise-128-miller-rabin-test.html)

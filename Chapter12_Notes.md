@@ -246,3 +246,84 @@ If the process takes k steps,<br>
 n &ge; Fib(k) &#x2248; &phi;<sup>k</sup>/5<sup>1/2</sup>
 
 Therefore the number of steps k grows as logarithm (to the base &phi;) of n. Hence, the order of growth is &Theta;(log n)
+
+## 1.2.6 Testing for Primality
+
+### Searching for divisors
+The most straight forward way, is by testing n for divisibility by successive integers starting with 2.
+```lisp
+(define (smallest-divisor n)
+    (define (find-divisor n test-divisor)
+        (cond ((> (square test-divisor) n) n)
+              ((divides? test-divisor n) test-divisor)
+              (else (find-divisor n (1+ test-divisor)))
+        )
+    )
+    (define (divides? a b)
+        (= (remainder b a) 0)
+    )
+    (find-divisor n 2)
+)
+
+(define (is-prime? n)
+    (= (smallest-divisor n) n)
+)
+```
+
+### The Fermat Test
+**Fermat's Little Theorem** If n is a prime number and a is any positive integer less than n, then a raised to nth power is congruent to a modulo n.
+
+Two numbers are said to be *congruent modulo n* if they both have the same remainder when divided by n.<br>
+    i.e. a and b are *congruent modulo n* if, ` (remainder a n) = (remainder b n)`
+
+The remainder of number a when divided by n is, *remainder of a modulo n* or *a modulo n*
+
+If n is not prime, most of the numbers a < n will not satisfy above relation.
+
+Given a number n,
+- Pick a random number a < n
+- compute the remainder a<sup>n</sup> modulo n
+- If the result is not equal to a, then n is certainly not prime ((remainder a n) = a)
+- If it is a, Repeat the test until confident
+
+To calculate a<sup>n</sup> modulo n,
+
+```lisp
+(define (expmod base exp n)
+    (cond ((= exp 0) 1)
+          ((even? exp) (remainder (square (expmod base (/ exp 2) n)) n))
+          (else (remainder (* base (expmod base (- exp 1) n) n)))
+    )
+)
+```
+This reduction step (in cases where exponent `e` is greater than 1) is based on fact that for any integers x, y, and m,<br>
+(x * y) modulo m = (x modulo m * y modulo m) modulo m<br>
+so b<sup>e</sup> modulo m = (b<sup>e/2</sup> modulo m * b<sup>e/2</sup> modulo m) modulo m<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= (b<sup>e/2</sup> modulo m)<sup>2</sup> modulo m
+
+Then Fermat's Test,
+```lisp
+(define (fermat-test n)
+    (define (try-it a)
+        (= (expmod a n n) a)
+    )
+    (try-it (+ 1 (random (- n 1))))
+)
+
+(define (fast-prime? n times)
+    (cond ((= times 0) true)
+          ((fermat-test n) (fast-prime? n (- times 1)))
+          (else false)
+    )
+)
+
+```
+
+### Probabilistic methods
+Answer obtained from Fermat's Test is only probably correct.
+- If n ever fails the Fermat's test, n is definitely not a prime
+- The fact that n passes the test, while strong indication, is not a guarantee that n is prime.
+
+There do exist numbers that fool Fermat test.
+
+These type of algorithms are known as *Probabilistic algorithms*

@@ -153,3 +153,208 @@
     )
     (fib-iter 1 0 0 1 n)
 )
+
+;Greatest Common Divisor
+
+(define (GCD a b)
+    (if (= b 0) a
+        (GCD b (Remainder a b))
+    )
+)
+
+;Prime Number
+
+;Smallest-Divisor
+(define (smallest-divisor n)
+    (define (find-divisor n test-divisor)
+        (cond ((> (square test-divisor) n) n)
+              ((divides? test-divisor n) test-divisor)
+              (else (find-divisor n (1+ test-divisor)))
+        )
+    )
+    (define (divides? a b)
+        (= (remainder b a) 0)
+    )
+    (find-divisor n 2)
+)
+
+(define (is-prime? n)
+    (= (smallest-divisor n) n)
+)
+
+
+;Fermat's Test
+(define (expmod base exp n)
+    (cond ((= exp 0) 1)
+          ((even? exp) (remainder (square (expmod base (/ exp 2) n)) n))
+          (else (remainder (* base (expmod base (- exp 1) n)) n))
+    )
+)
+
+
+(define (fermat-test n)
+    (define (try-it a)
+        (= (expmod a n n) a)
+    )
+    (try-it (+ 1 (random (- n 1))))
+)
+
+(define (fast-prime? n times)
+    (cond ((= times 0) true)
+          ((fermat-test n) (fast-prime? n (- times 1)))
+          (else false)
+    )
+)
+
+;Ex1.22
+(define (timed-prime-test n)
+  (newline)
+  (display n)
+  (start-prime-test n (runtime))
+)
+
+(define (start-prime-test n start-time)
+  (if (fast-prime? n 100)
+      (begin
+          (report-prime (- (runtime) start-time))
+          true
+      )
+      false
+  )
+)
+
+(define (report-prime elapsed-time)
+  (display " *** ")
+  (display elapsed-time)
+)
+
+(define (search-for-prime a n)
+    (define (iter number count)
+        (if (< count n)
+            (begin
+                (if (timed-prime-test number)
+                    (iter (+ number 2) (1+ count))
+                    (iter (+ number 2) count) 
+                )
+            )
+        )
+    )
+    (if (even? a)
+        (iter (+ a 1) 0)
+        (iter (+ a 2) 0)
+    )
+)
+
+;Ex 1.23 Smallest divisor with next test-divisor
+(define (smallest-divisor n)
+    (define (find-divisor n test-divisor)
+        (cond ((> (square test-divisor) n) n)
+              ((divides? test-divisor n) test-divisor)
+              (else (find-divisor n (next test-divisor)))
+        )
+    )
+    (define (divides? a b)
+        (= (remainder b a) 0)
+    )
+    (define (next divisor)
+        (if (even? divisor)
+            (1+ divisor)
+            (+ divisor 2)
+        )
+    )
+    (find-divisor n 2)
+)
+
+;Ex 1.27 Carmichael numbers
+(define (carmichael n)
+    (define (fermat-test a n)
+        (= (expmod a n n) a)
+    )
+    (define (iter count)
+        (cond ((= count n) true)
+              ((fermat-test count n) (iter (1+ count)))
+              (else false)
+        )
+    )
+    (iter 1)
+)
+
+;Ex. 1.28 Miller-Rabin test
+(define (miller-rabin-expmod base exp m)
+    (define (squaremod-with-check x)
+        (define (non-trivial-sqrt? x square)
+            (if (and (= square 1)
+                     (not (= x 1))
+                     (not (= x (- m 1)))
+                )
+                0
+                square
+            )
+        )
+        (non-trivial-sqrt? x (remainder (square x) m))
+    )
+    (cond ((= exp 0) 1)
+          ((even? exp) (squaremod-with-check
+                            (miller-rabin-expmod base (/ exp 2) m)
+                       )
+          )
+          (else
+            (remainder (* base (miller-rabin-expmod base (- exp 1) m)) m)
+          )
+    )
+)
+
+(define (miller-rabin-test n)
+    (define (try-it a)
+        (define (check-it x)
+            (and (not (= x 0)) (= x 1))
+        )
+        (check-it (miller-rabin-expmod a (- n 1) n))
+    )
+    (try-it (+ 1 (random (- n 1))))
+)
+
+
+(define (fast-prime? n times)
+    (cond ((= time 0) true)
+          ((miller-rabin-test n) (fast-prime? n (- times 1)))
+          (else false)
+    )
+)
+
+(define (prime? n)
+    (fast-prime? n 100)
+)
+
+;;Another implementation for Miller Rabin
+(define (expmod-mr base exp n)
+    (define (square-non-trivial-check x)
+        (let ((y (remainder (square x) n)))
+            (if (and (not (= x 1)) (not (= x (- n 1))) (= y 1))
+                0
+                y
+            )
+        )
+    )
+    (cond ((= exp 0) 1)
+          ((even? exp) (square-nontrivial-check (expmod-mr base (/ exp 2) n)))
+          (else (remainder (* base (expmod-mr base (- exp 1) n)) n))
+    )
+)
+
+(define (mr-test n)
+    (define (check a)
+        (= (expmod a (- n 1) n) 1)
+    )
+    (check (+ 1 (random-integer (- n 1))))
+)
+
+(define (mr-prime? n)
+    (define (test a)
+        (cond ((= a 0) true)
+              ((mr-test n) (test (- a 1)))
+              (else false)
+        )
+    )
+    (if (= n 1) #f (test 100))
+)

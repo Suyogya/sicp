@@ -208,3 +208,95 @@ x)
 (* x y))
 ;if value of x is 2, inside the body x will be 3 and y will be 4 (which is outer x plus 2)
 ```
+
+## 1.3.3 Procedures as General methods
+
+### Finding roots of equations by half-interval method
+To find roots of equation, f(x) = 0, where f is a continuous function.
+
+If we're given point a and b, such that<br>
+f(a) < 0 < f(b), then f must have at least one zero between a and b.
+
+The method to locate zero is,
+1. Let x be average of a and b, compute f(x)
+2. If f(x) > 0 f must have a zero between a and x, go to step 1 for b = x
+3. If f(x) < 0 f must have a zero between x and b, go to step 1 for a = x
+4. If f(x) = 0 x is the root
+
+```lisp
+(define (find-root f a b)
+    (let ((x (average a b)))
+        (cond ((close-enough? a b) x)
+              ((< (f x) 0) (find-root f x b))
+              (else (find-root f a x))
+        )
+    )
+)
+
+(define (close-enough? a b)
+    (< (abs (- a b)) 0.0001)
+)
+```
+
+The method assumes negative point and postive point are given in correct order. To be able to handle where they are not in correct order, we write following procedure,
+
+```lisp
+(define (half-interval f a b)
+    (let (
+            (a-value (f a))
+            (b-value (f b))
+         )
+         (cond
+            ((and (< a-value 0) (> b-value 0)) (find-root f a b))
+            ((and (< b-value 0) (> a-value 0)) (find-root f b a))
+            (else (error "Values are not of opposite sign " a b))
+         )
+    )
+)
+```
+
+### Finding fixed point of functions
+A number x is called fix point of function f if x satisfies f(x) = x.
+
+For some function, we begin with an initial guess and applying f repeatedly, until the value doesn't change very much.
+
+The procedure would be,
+```lisp
+(define (fixed-point f guess)
+    (let (
+            (new-guess (f guess))
+         )
+         (if (close-enough? guess new-guess) 
+             new-guess
+             (fixed-point f new-guess)
+         )
+    )
+)
+```
+
+Fixed point is similar to what we did to find square root.
+
+for a square root, we have<br>
+y<sup>2</sup> = x<br>
+y = x/y
+
+We can define the procedure,
+```lisp
+(define (sqrt-fixed-v1 x)
+    (define (f y)
+        (/ x y)
+    )
+    (fixed-point f 1.0)
+)
+```
+The `sqrt` method oscillates and never converges.
+
+One way to control this oscillation is to dampen the function. We do this by averaging.
+```lisp
+(define (sqrt-fixed x)
+    (define (f y)
+        (average y (/ x y))
+    )
+    (fixed-point f 1.0)
+)
+```

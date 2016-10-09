@@ -251,3 +251,142 @@
          )
     )
 )
+
+;Half Interval method
+(define (find-root f a b)
+    (let ((x (average a b)))
+        (cond ((close-enough? a b) x)
+              ((< (f x) 0) (find-root f x b))
+              (else (find-root f a x))
+        )
+    )
+)
+
+(define (close-enough? a b)
+    (< (abs (- a b)) 0.0001)
+)
+
+(define (half-interval f a b)
+    (let (
+            (a-value (f a))
+            (b-value (f b))
+         )
+         (cond
+            ((and (< a-value 0) (> b-value 0)) (find-root f a b))
+            ((and (< b-value 0) (> a-value 0)) (find-root f b a))
+            (else (error "Values are not of opposite sign " a b))
+         )
+    )
+)
+
+;Fixed point
+(define (fixed-point f guess)
+    (let (
+            (new-guess (f guess))
+         )
+         (display "New guess ")
+         (display new-guess)
+         (newline)
+         (if (close-enough? guess new-guess) 
+             new-guess
+             (fixed-point f new-guess)
+         )
+    )
+)
+
+;simple implementation of square root using fixed point. This procedure does not convert.
+(define (sqrt-fixed-v1 x)
+    (define (f y)
+        (/ x y)
+    )
+    (fixed-point f 1.0)
+)
+
+;square root using fixed point with average damping
+(define (sqrt-fixed x)
+    (define (f y)
+        (average y (/ x y))
+    )
+    (fixed-point f 1.0)
+)
+
+;Ex1.35 Fixed point for golden ratio using transformation 1 + 1/x
+(newline)
+(display "solution for golden ration")
+(newline)
+(fixed-point (lambda (x) (+ 1 (/ 1 x))) 1.0)
+
+;Ex1.36 find solution for x^x = 1000
+(newline)
+(display "solution for x^x = 1000")
+(newline)
+(fixed-point (lambda (x) (/ (log 1000) (log x))) 2.0)
+
+(newline)
+(display "solution for x^x = 1000 with average damping")
+(newline)
+(fixed-point (lambda (x) (average x (/ (log 1000) (log x)))) 2.0)
+
+;Ex1.37 Continued fraction
+(define (cont-frac func-n func-d k)
+    (define (recur i)
+        (if (> i k) 0
+            (/ (func-n i) (+ (func-d i) (recur (1+ i))))
+        )
+    )
+    (recur 1)
+)
+
+;(newline)
+;(display "solution for golden-ratio using Continued fraction, 12 steps")
+;(newline)
+;(/ 1 (cont-frac (lambda (i) 1.0)
+;            (lambda (i) 1.0)
+;            12)
+;)
+
+;Continued fraction iterative
+(define (cont-frac-iter func-n func-d k)
+    (define (iter i result)
+        (if (= i 0) result
+            (iter (- i 1)
+                  (/ (func-n i) (+ (func-d i) result)) 
+            )
+        )
+    )
+    (iter k 0)
+)
+
+(newline)
+(display "solution for golden-ratio using Continued fraction iterative, 12 steps")
+(newline)
+(/ 1 (cont-frac (lambda (i) 1.0)
+            (lambda (i) 1.0)
+            12)
+)
+
+(newline)
+(display "Solution for e using continuous fraction")
+(newline)
+(+ 2 (cont-frac (lambda (i) 1.0)
+                (lambda (i)
+                    (if (= (remainder i 3) 2)
+                        (* 2 (+ 1 (integer-truncate  i 3)))
+                        1
+                    )
+                )
+                100
+    )
+)
+
+;Ex 1.39 function to calculate tan x using continuous fraction
+(define (tan-cf x k)
+    (cont-frac (lambda (i)
+                    (if (= i 1) x (- (square x)))
+               )
+               (lambda (i)
+                    (- (* 2 i) 1)
+               )
+               k
+    )
+)

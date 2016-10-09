@@ -225,3 +225,29 @@
     (define (next i) (1+ i))
     (filtered-accumulator-iter predicate * 1 identity 1 next n)
 )
+
+;Local variable using lambda
+(define (f-local-lambda x y)
+    (
+        (lambda (a b)
+            (+ (* x (square a))
+               (* y b)
+               (* a b)
+            )
+        )
+        (+ 1 (* x y))
+        (- 1 y)
+    )
+)
+
+(define (f-local-let x y)
+    (let (
+            (a (+ 1 (* x y)))
+            (b (- 1 y))
+         )
+         (+ (* x (square a))
+            (* y b)
+            (* a b)
+         )
+    )
+)

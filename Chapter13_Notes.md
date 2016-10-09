@@ -92,3 +92,119 @@ Similarly, we can define procedure to calculate integration of function &fnof; b
     (* dx (sum f (+ a (/ dx 2)) next b))
 )
 ``` 
+
+## 1.3.2 Constructing Procedures using Lambda
+`lambda` is a special form which creates procedure.
+
+e.g.
+`(lambda (x) (+ x 4))`
+
+General form:
+```lisp
+(lambda (<formal-parameters>) <body>)
+```
+
+The resulting procedure is just as much a procedure as one created using `define`. The difference is it has not been associated with any name.
+
+```lisp
+(define (plus4 x) (+ x 4))
+```
+is equivalent to,
+```lisp
+(define plus4 (lambda (x) (+ x 4)))
+```
+
+### Using let to create local variables
+Use `let` to create local variables.
+
+e.g. we wish to compute the function,<br>
+f(x,y) = x(1 + xy)<sup>2</sup> + y(1 - y) + (1 + xy)(1 - y)
+
+Which we could express as,<br>
+a = 1 + xy<br>
+b = 1 - y<br>
+f(x, y) = xa<sup>2</sup> + yb + ab<br>
+
+Creating local variable using lambda,
+```lisp
+(define (f-local-lambda x y)
+    (
+        (lambda (a b)
+            (+ (* x (square a))
+               (* y b)
+               (* a b)
+            )
+        )
+        (+ 1 (* x y))
+        (- 1 y)
+    )
+)
+```
+
+Creating local variable using let,
+```lisp
+(define (f-local-let x y)
+    (let (
+            (a (+ 1 (* x y)))
+            (b (- 1 y))
+         )
+         (+ (* x (square a))
+            (* y b)
+            (* a b)
+         )
+    )
+)
+```
+
+General structure
+
+```lisp
+(let (
+        (<var1> <exp1>)
+        (<var2> <exp2>)
+        .
+        .
+        .
+        (<varn> <expn>)
+     )
+)
+```
+
+- First part of let expression is list of name-expression pairs
+- each name is associated with value of corresponding expression
+
+`let` is interpreted as an alternate syntax for
+```lisp
+(
+    (lambda 
+        (<var1> ... <varn>)
+        <body>
+    )
+    <exp1>
+    .
+    .
+    .
+    <expn>
+)
+```
+
+`let` expression is simply syntactic sugar for underlying lambda application.
+- The scope of a variable specified by `let` expression is the body of the `let`.
+- `let` allows one to bind variables as local.
+```lisp
+(+ (let ((x 3))
+    (+ x (* x 10)))
+x)
+;when x = 5, it is evaluated to
+(+ (+ 3 (* 3 10)) 5)
+;so inside the let body, x = 3 and it's 5 outside it
+38
+```
+
+- The variables' values are computed outside the `let`.
+```lisp
+(let ((x 3)
+      (y (+ x 2)))
+(* x y))
+;if value of x is 2, inside the body x will be 3 and y will be 4 (which is outer x plus 2)
+```

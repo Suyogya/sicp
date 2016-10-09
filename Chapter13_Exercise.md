@@ -247,3 +247,29 @@ Iterative accumulator with filter
 )
 ```
 
+## 1.34
+Suppose we define the procedure
+```lisp
+(define (f g)
+    (g 2)
+)
+```
+
+then we have 
+```lispe
+=>(f square)
+4
+=>(f (lambda (z) (* z (+ z 1))))
+6
+```
+### Answer
+
+```lisp
+;Using substitution method
+(f f)
+(f 2)
+(2 2)
+error
+```
+
+We get an error, object 2 is not applicable

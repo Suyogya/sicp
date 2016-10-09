@@ -190,3 +190,60 @@ a. the sum of the squares of the prime numbers in the interval a to b (assuming 
 
 b. the product of all the positive integers less than n that are relatively prime to n (i.e., all positive integers i < n such that GCD(i,n) = 1).
 
+### Answer
+
+Recursive accumulator with filter
+```lisp
+(define (filtered-accumulator predicate combiner null-value term a next b)
+    (cond ((> a b) null-value)
+          ((predicate a) (combiner (term a) (filtered-accumulator predicate combiner null-value term (next a) next b)))
+          (else (filtered-accumulator predicate combiner null-value term (next a) next b))
+    )
+)
+
+;sum of square of primes between a to b
+(define (sum-square-primes a b)
+    (define (next x) (1+ x))
+    (filtered-accumulator prime? + 0 square a next b)
+)
+
+;product of all i < n such that GCD (i, n) = 1
+(define (prod-rel-prime n)
+    (define (predicate i)
+        (= (GCD i n) 1)
+    )
+    (define (identity x) x)
+    (define (next i) (1+ i))
+    (filtered-accumulator predicate * 1 identity 1 next n)
+)
+```
+
+Iterative accumulator with filter
+```lisp
+(define (filtered-accumulator-iter predicate combiner null-value term a next b)
+    (define (iter result item)
+        (cond ((> item b) result)
+              ((predicate item) (iter (combiner result (term item)) (next item)))
+              (else (iter result (next item)))
+        )
+    )
+    (iter null-value a)
+)
+
+;sum of square of primes between a to b using iterative accumulator
+(define (sum-square-primes-iter a b)
+    (define (next x) (1+ x))
+    (filtered-accumulator-iter prime? + 0 square a next b)
+)
+
+;product of all i < n such that GCD (i, n) = 1 using iterative accumulator
+(define (prod-rel-prime-iter n)
+    (define (predicate i)
+        (= (GCD i n) 1)
+    )
+    (define (identity x) x)
+    (define (next i) (1+ i))
+    (filtered-accumulator-iter predicate * 1 identity 1 next n)
+)
+```
+

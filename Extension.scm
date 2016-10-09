@@ -44,3 +44,7 @@
 (define (double x)
     (* x 2)
 )
+
+(define (cube x)
+    (* x x x)
+)

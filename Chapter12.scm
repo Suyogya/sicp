@@ -90,7 +90,7 @@
 
 
 ;Ex1.15 Sine approximation
-(define (cube x) (* x x x))
+(define (cube x) (* x x x)))
 (define (p x) (- (* 3 x) (* 4 (cube x))))
 (define (sine angle)
    (if (not (> (abs angle) 0.1))
@@ -316,7 +316,8 @@
 
 
 (define (fast-prime? n times)
-    (cond ((= time 0) true)
+    (cond ((= times 0) true)
+          ((= n 1) false)
           ((miller-rabin-test n) (fast-prime? n (- times 1)))
           (else false)
     )

@@ -415,3 +415,180 @@ tan x = x/(1 - x<sup>2</sup>/(3 - x<sup>2</sup>/(5 - x<sup>2</sup>/(7 - ...))))
 
 where x is in radians. Define a procedure (tan-cf x k) that computes an approximation to the tangent function based on Lambert's formula. K specifies the number of terms to compute, as in exercise 1.37.
 
+### Answer
+```lisp
+(define (tan-cf x k)
+    (cont-frac (lambda (i)
+                    (if (= i 1) x (- (square x)))
+               )
+               (lambda (i)
+                    (- (* 2 i) 1)
+               )
+               k
+    )
+)
+```
+
+## 1.40
+Define a procedure cubic that can be used together with the newtons-method procedure in expressions of the form
+
+(newtons-method (cubic a b c) 1)
+
+to approximate zeros of the cubic x3 + ax2 + bx + c.
+
+### Answer
+```lisp
+(define (cubic a b c)
+    (lambda (x)
+        (+ (cube x) (* a (square x)) (* b x) c)
+    )
+)
+```
+
+## 1.41
+Define a procedure double that takes a procedure of one argument as argument and returns a procedure that applies the original procedure twice. For example, if inc is a procedure that adds 1 to its argument, then (double inc) should be a procedure that adds 2. What value is returned by
+
+(((double (double double)) inc) 5)
+
+### Answer
+```lisp
+(define (double f)
+    (lambda (x) (f (f x)))
+)
+
+(define (inc x)
+    (1+ x)
+)
+```
+
+
+```lisp
+(((double (double double)) inc) 5)
+(((double (lambda (x) (double (double x)))) inc) 5)
+(((lambda (x) (double (double (double (double x))))) inc) 5)
+((lambda (x) (double (double (double (inc (inc x)))))) 5)
+...
+...
+((lambda (x) (double (double (inc (inc (inc (inc x))))))) 5)
+((lambda (x) (double (inc (inc (inc (inc (inc (inc (inc (inc x)))))))))) 5)
+((lambda (x) (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc x))))))))))))))))) 5)
+21
+```
+
+## 1.42
+ Let f and g be two one-argument functions. The composition f after g is defined to be the function x  f(g(x)). Define a procedure compose that implements composition. For example, if inc is a procedure that adds 1 to its argument
+
+ ### Answer
+ ```lisp
+ (define (compose f g)
+    (lambda (x) (f (g x)))
+)
+ ```
+
+## 1.43
+If f is a numerical function and n is a positive integer, then we can form the nth repeated application of f, which is defined to be the function whose value at x is f(f(...(f(x))...)). For example, if f is the function x   x + 1, then the nth repeated application of f is the function x   x + n. If f is the operation of squaring a number, then the nth repeated application of f is the function that raises its argument to the 2nth power. Write a procedure that takes as inputs a procedure that computes f and a positive integer n and returns the procedure that computes the nth repeated application of f. Your procedure should be able to be used as follows:
+
+((repeated square 2) 5)
+625
+
+### Answer
+```lisp
+(define (repeated f n)
+    (cond ((= n 1) f)
+          ((even? n) (double (repeated f (/ n 2))))
+          (else (compose f (repeated f (- n 1))))
+    )
+)
+```
+
+```lisp
+;iterative version
+(define (repeated-iter f n)
+    (define (iter i result)
+        (cond ((= i 1) result)
+              ((even? i) (repeated (double result) (/ n 2)))
+              (else (repeated (compose f result) (- n 1)))
+        )
+    )
+    (iter n f)
+)
+```
+
+## 1.44
+The idea of smoothing a function is an important concept in signal processing. If f is a function and dx is some small number, then the smoothed version of f is the function whose value at a point x is the average of f(x - dx), f(x), and f(x + dx). Write a procedure smooth that takes as input a procedure that computes f and returns a procedure that computes the smoothed f. It is sometimes valuable to repeatedly smooth a function (that is, smooth the smoothed function, and so on) to obtained the n-fold smoothed function. Show how to generate the n-fold smoothed function of any given function using smooth and repeated from exercise 1.43.
+
+### Answer
+```lisp
+(define (smooth f)
+    (define dx 0.00001)
+    (lambda (x) (/ (+ (f (- x dx)) (f x) (f (+ x dx)))))
+)
+
+(define (n-fold-smoothed f n)
+    ((repeated smooth n) f)
+)
+```
+
+## 1.45
+We saw in section 1.3.3 that attempting to compute square roots by naively finding a fixed point of y  x/y does not converge, and that this can be fixed by average damping. The same method works for finding cube roots as fixed points of the average-damped y  x/y2. Unfortunately, the process does not work for fourth roots -- a single average damp is not enough to make a fixed-point search for y  x/y3 converge. On the other hand, if we average damp twice (i.e., use the average damp of the average damp of y  x/y3) the fixed-point search does converge. Do some experiments to determine how many average damps are required to compute nth roots as a fixed-point search based upon repeated average damping of y  x/yn-1. Use this to implement a simple procedure for computing nth roots using fixed-point, average-damp, and the repeated procedure of exercise 1.43. Assume that any arithmetic operations you need are available as primitives.
+
+### Answer
+
+It seems that average damping needs to be repeated x times for nth root such that,<br>
+2<sup>x</sup> &le; n<br>
+2<sup>x + 1</sup> &gt; n
+
+i.e. for nth root between 2<sup>x</SUP> and 2<sup>x + 1</sup> it needs to be average damped x times
+for e.g. for nth root between 16 and 31, it needs to be average damped 4 times since, 2<sup>4</sup> = 16 &le; n < 2<sup>5</sup>  
+
+```lisp
+(define (nth-root x n)
+    (fixed-point 
+        (
+            (repeated average-damp 
+                      (floor->exact (/ (log n) (log 2)))
+            ) 
+            (lambda (y) 
+                (/ x (^ y (- n 1)))
+            )
+        ) 
+        1.0)
+)
+```
+
+## 1.46
+Several of the numerical methods described in this chapter are instances of an extremely general computational strategy known as iterative improvement. Iterative improvement says that, to compute something, we start with an initial guess for the answer, test if the guess is good enough, and otherwise improve the guess and continue the process using the improved guess as the new guess. Write a procedure iterative-improve that takes two procedures as arguments: a method for telling whether a guess is good enough and a method for improving a guess. Iterative-improve should return as its value a procedure that takes a guess as argument and keeps improving the guess until it is good enough. Rewrite the sqrt procedure of section 1.1.7 and the fixed-point procedure of section 1.3.3 in terms of iterative-improve.
+
+### Answer
+
+```lisp
+(define (iterative-improve improve close-enough?)
+    (lambda (guess)
+        (let ((new-guess (improve guess)))
+            (if (close-enough? new-guess guess) 
+                new-guess
+                ((iterative-improve improve close-enough?) new-guess)
+            )
+        )
+    )
+)
+```
+
+```lisp
+(define (sqrt-iterative-improve x)
+    (
+        (iterative-improve (average-damp (lambda (y) (/ x y)))
+                            close-enough?
+        )
+        1.0
+    )
+)
+```
+```lisp
+(define (fixed-point-iterative-improve f guess)
+    (
+        (iterative-improve f close-enough?)
+        guess
+    )
+)
+```

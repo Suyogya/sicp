@@ -300,3 +300,100 @@ One way to control this oscillation is to dampen the function. We do this by ave
     (fixed-point f 1.0)
 )
 ```
+
+
+## 1.3.4 Procedures as Return Values
+Given a function &fnof;, we consider the function whose value at x is equal to average of x and &fnof;(x). This is average damping and can be expressed using following procedure:
+```lisp
+(define (average-damp f)
+    (lambda (x) (average x (f x)))
+)
+```
+The procedure takes another procedure `f` as an argument and returns a procedure, which when applied to x returns average of x and (f x)
+
+We can reformulate the square root procedure as,
+```lisp
+(define (sqrt-damp x)
+    (fixed-point (average-damp (lambda (y) (/ x y))) 1.0)
+)
+```
+
+Similarly we can write a procedure to find cube root
+```lisp
+(define (cube-root-damp x)
+    (fixed-point (average-damp (lambda (y) (/ x (square y)))) 1.0)
+)
+```
+
+### Newton's method
+Newton's Method states that, if x -> g(x) is differentiable, then solution of equation g(x) = 0 is a fixed point of the function x -> f(x) where,
+
+f(x) = x - g(x)/Dg(x)
+
+and Dg(x) is the derivative of g evaluated at x. Derivative is (like average damping) which transforms one function to another,<br>
+Dg(x) = (g(x + dx) - g(x))/dx
+where dx is a very small number (say, 0.00001)
+
+```lisp
+(define (derivative g)
+    (define dx 0.00001)
+    (lambda (x) (/ (- (g (+ x dx)) (g x)) dx))
+)
+```
+We can now write Newton's method as,
+
+```lisp
+(define (newton-transform g)
+    (lambda (x)
+        (- x (/ (g x) ((derivative g) x)))
+    )
+)
+
+(define (newtons-method g guess)
+    (fixed-point (newton-transform g) guess)
+)
+```
+
+So we can see for square root we have<br>y<sup>2</sup> = x<br>y<sup>2</sup> - x = 0
+
+g(y) = y<sup>2</sup> - x
+
+```lisp
+(define (sqrt-newton x)
+    (newtons-method (lambda (y) (- (square y) x)) 1.0)
+)
+```
+
+### Abstractions and first-class procedure
+Two implementation of square root using general procedures,
+- fixed-point search
+- Newton's method - also uses fixed-point search
+Both of them begins with a function and find fixed point of some transformation of the function.
+
+Generalizing that,
+```lisp
+(define (fixed-point-of-transform transform method guess)
+    (fixed-point (transform method) guess)
+)
+```
+So, we can write square root (average damped version) as,
+```lisp
+(define (sqrt-transform-avg x)
+    (fixed-point-of-transform average-damp (lambda (y) (/ x y)) 1.0)
+)
+```
+We can write square root (newton's method version) as,
+```lisp
+(define (sqrt-transform-newton x)
+    (fixed-point-of-transform newton-transform (lambda (y) (- (square y) x)) 1.0)
+)
+```
+
+To have a first-class status, elements must have some 'rights and priviliges':
+- They may be named by variables
+- They may be passed as arguments to procedures
+- They may be returned as a results of procedures
+- They may be included in data structures
+
+If functions have these priviliges, then they are *first-class element* of the programming language.
+

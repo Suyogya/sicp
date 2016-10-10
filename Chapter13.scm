@@ -390,3 +390,147 @@
                k
     )
 )
+
+;Procedure that returns average-damp for any procedure
+
+(define (average-damp f)
+    (lambda (x) (average x (f x)))
+)
+
+;Implementation of square root using average-damp procedure
+(define (sqrt-damp x)
+    (fixed-point (average-damp (lambda (y) (/ x y))) 1.0)
+)
+
+;Implementation of cube root using average-damp procedure
+(define (cube-root-damp x)
+    (fixed-point (average-damp (lambda (y) (/ x (square y)))) 1.0)
+)
+
+;Derivative of function
+(define (derivative g)
+    (define dx 0.00001)
+    (lambda (x) (/ (- (g (+ x dx)) (g x)) dx))
+)
+
+;Newton's transformation and method
+(define (newton-transform g)
+    (lambda (x)
+        (- x (/ (g x) ((derivative g) x)))
+    )
+)
+
+(define (newtons-method g guess)
+    (fixed-point (newton-transform g) guess)
+)
+
+(define (sqrt-newton x)
+    (newtons-method (lambda (y) (- (square y) x)) 1.0)
+)
+
+;generalize fixed-point-transform
+(define (fixed-point-of-transform transform method guess)
+    (fixed-point (transform method) guess)
+)
+
+;square root implementation using fixed point transform average damping
+(define (sqrt-transform-avg x)
+    (fixed-point-of-transform average-damp (lambda (y) (/ x y)) 1.0)
+)
+
+;square root implementation using fixed point transform average damping
+(define (sqrt-transform-newton x)
+    (fixed-point-of-transform newton-transform (lambda (y) (- (square y) x)) 1.0)
+)
+
+;Ex1.40 method that creates cubic function x^3 + ax^2 + bx + c
+(define (cubic a b c)
+    (lambda (x)
+        (+ (cube x) 
+           (* a (square x)) 
+           (* b x) 
+           c)
+    )
+)
+
+;Ex1.41 Double that applies same function twice
+(define (double f)
+    (lambda (x) (f (f x)))
+)
+
+(define (inc x)
+    (1+ x)
+)
+
+;Ex1.42 Compose
+(define (compose f g)
+    (lambda (x) (f (g x)))
+)
+
+;Ex1.43 Repeated function repeat function n times
+(define (repeated f n)
+    (cond ((= n 0) (lambda (x) x))
+          ((= n 1) f)
+          ((even? n) (double (repeated f (/ n 2))))
+          (else (compose f (repeated f (- n 1))))
+    )
+)
+
+
+;iterative version
+(define (repeated-iter f n)
+    (define (iter i result)
+        (cond ((= i 1) result)
+              ((even? i) (repeated (double result) (/ n 2)))
+              (else (repeated (compose f result) (- n 1)))
+        )
+    )
+    (iter n f)
+)
+
+;Ex1.44 Smooth function
+(define (smooth f)
+    (define dx 0.00001)
+    (lambda (x) (/ (+ (f (- x dx)) (f x) (f (+ x dx)))))
+)
+
+(define (n-fold-smoothed f n)
+    ((repeated smooth n) f)
+)
+
+;Ex1.45 nth-root function that finds nth root of number x using repeated average damp 
+
+(define (nth-root x n)
+    (fixed-point ((repeated average-damp (floor->exact (/ (log n) (log 2)))) (lambda (y) (/ x (^ y (- n 1))))) 1.0)
+)
+
+;Ex1.46 Iterative improve
+
+(define (iterative-improve improve close-enough?)
+    (lambda (guess)
+        (let ((new-guess (improve guess)))
+            (if (close-enough? new-guess guess) 
+                new-guess
+                ((iterative-improve improve close-enough?) new-guess)
+            )
+        )
+    )
+)
+
+
+
+(define (sqrt-iterative-improve x)
+    (
+        (iterative-improve (average-damp (lambda (y) (/ x y)))
+                            close-enough?
+        )
+        1.0
+    )
+)
+
+(define (fixed-point-iterative-improve f guess)
+    (
+        (iterative-improve f close-enough?)
+        guess
+    )
+)

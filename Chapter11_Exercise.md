@@ -84,7 +84,7 @@ Translate the following expression into prefix form
 ## 1.3
 Define a procedure that takes three numbers as arguments and returns the sum of the squares of the two larger numbers.
 
-###Answer
+### Answer
 
 ```lisp
 =>(define (sum-square-larger a b c)
@@ -100,14 +100,14 @@ Define a procedure that takes three numbers as arguments and returns the sum of 
 25
 ```
 
-##1.4
+## 1.4
 Observe that our model of evaluation allows for combinations whose operators are compound expressions. Use this observation to describe the behavior of the following procedure:
 ```lisp
 (define (a-plus-abs-b a b)
   ((if (> b 0) + -) a b))
 ```
 
-###Answer
+### Answer
 ```lisp
 ;Evaluation of procedure a-plus-abs-b when a = 4, b = -6
 => (a-plus-abs-b 4 -6)
@@ -117,7 +117,7 @@ Observe that our model of evaluation allows for combinations whose operators are
 => 10
 ```
 
-##1.5
+## 1.5
 Ben Bitdiddle has invented a test to determine whether the interpreter he is faced with is using applicative-order evaluation or normal-order evaluation. He defines the following two procedures:
 ```lisp
 (define (p) (p))
